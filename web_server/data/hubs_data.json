@@ -1,0 +1,1 @@
+{"sdb": {"children_count": 1, "children": [{"name": "sdb", "mount_points": [], "size": [], "children": {"sdb1": []}, "usb_version_3": true, "dev_path": "/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1.3/2-1.3:1.0/host2/target2:0:0/2:0:0:0/block/sdb/sdb1", "port_identifier": "2-1.3:1.0"}]}, "sdc": {"children_count": 0, "children": []}}

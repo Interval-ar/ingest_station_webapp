@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingest Station</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <style>
+        .hub {
+            display: flex;
+            flex-direction: row;
+            background-color: gray;
+            margin-bottom: 2rem;
+            gap: .2rem;
+            flex-wrap: wrap;
+            text-align: center;
+        }
+
+        .port {
+            flex-grow: 1;
+            background-color: rgba(0, 255, 255, 0.308);
+            padding: .2rem 1rem;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.9/vue.cjs.js"
+        integrity="sha512-j+bMLqADV4LOKyO5XNiNEJKjfaALJYd+omxCkRbfkGIoIqrQVdYwehHpWpl2mhZ3cJtLeuI6A4+PdO3MGvfyUA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+
+    <div id="header">
+        <a href="hub_config">Configurar hubs</a>
+
+    </div>
+    <div id="main">
+        <h1>Ingest Station dashboard</h1>
+        <div id="hubs_container" class="grid">
+
+        </div>
+    </div>
+
+    <script>
+        function generate_port(port_data, empty, port) {
+
+
+            port_div = document.createElement("div")
+            port_div.classList.add("port")
+            port_name = document.createElement("small")
+            itemcount = document.createElement("p")
+            transfered = document.createElement("p")
+
+            if (empty) {
+                transfered.innerHTML = "-----"
+                itemcount.innerHTML = "------"
+                port_name.innerHTML = port
+
+
+            } else {
+
+                transfered.innerHTML = (port_data["usb_version_3"]) ? "USB 3.0" : "USB 2.0"
+                itemcount.innerHTML = port_data["size"]
+                port_name.innerHTML = port_data["name"]
+            }
+            port_div.appendChild(port_name)
+            port_div.appendChild(itemcount)
+            port_div.appendChild(transfered)
+            return port_div
+        }
+        // generate_port()
+        function generate_hub(hub_map, usb_data) {
+            for (hub of hub_map) {
+                hub_div = document.createElement("div")
+                hub_div.classList.add("hub")
+                for (port of hub) {
+                    empty = true
+                    for (port_key in usb_data) {
+                        console.log(port_key)
+                        if (port_key.includes(port.substring(1))) {
+
+                            port = port_key
+                        }
+                    }
+                    if (port in usb_data) { empty = false }
+                    hub_div.appendChild(generate_port(usb_data[port], empty, port))
+                }
+                document.getElementById("hubs_container").appendChild(hub_div)
+            }
+        }
+
+        async function get_map() {
+            const [ports_data_response, hubs_data_response] = await Promise.all([
+                fetch('/get_per_usb_data'),
+                fetch('/get_hubs')
+            ]);
+            const ports_data = await ports_data_response.json()
+            const hubs_data = await hubs_data_response.json()
+            generate_hub(hubs_data, ports_data)
+            // return [ports_data, hubs_data]
+            sleep(500)
+            // get_map()
+        }
+
+        get_map().then(([ports_data, hubs_data]) => {
+        }).catch(error => {
+            // /movies or /categories request failed
+        });
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Inicializacion del hub.</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script type="text/javascript">
+        auto_scroll = true
+        function toggle_auto_scroll() {
+            auto_scroll = !auto_scroll
+        }
+        function getMessages() {
+            $.ajax({
+                url: '/hub_session_logs?req_id={{ req_id }}',
+                success: function (data) {
+                    session_logs = data["session"]
+                    identifiers_logs = data["identifiers"]
+
+                    log_output = document.getElementById("log")
+                    identifiers = document.getElementById("identifiers")
+
+                    log_output.innerHTML = session_logs.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                    if (auto_scroll) {
+                        log_output.scrollTop = log_output.scrollHeight;
+                    }
+
+                    console.log(identifiers_logs)
+                    identifiers_string = ""
+                    for (const identifier of identifiers_logs) {
+                        identifiers_string += identifier + " | "
+                    }
+                    identifiers.innerHTML = identifiers_string
+
+                },
+                complete: function () {
+                    // Repeat the request after a short delay
+                    setTimeout(getMessages, 200);
+                }
+            });
+        }
+
+        function save_hub_config() {
+            $.ajax({
+                url: '/save_current_hub_config?req_id={{ req_id }}',
+                success: function (data) {
+                    console.log(data)
+                }
+            });
+        }
+        function start_config() {
+
+            $.ajax({
+                url: '/hub_config_backend?req_id={{ req_id }}',
+                success: function (data) {
+                    console.log(data)
+                }
+            });
+        }
+        function clear_logs() {
+
+            $.ajax({
+                url: '/clear_logs?req_id={{ req_id }}',
+                success: function (data) {
+                    console.log(data)
+                }
+            });
+        }
+
+
+        $(document).ready(function () {
+            getMessages();
+        });
+
+        function show_section(selected_section) {
+            sections = ["add-hub-container", "delete-hub-container"]
+            for (section of sections){
+                console.log(section,selected_section)
+                i_section = document.getElementById(section)
+                if(section == selected_section){
+                    i_section.classList.remove("hide")
+                }else{
+                    i_section.classList.add("hide")
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html {
+            height: 100vh;
+            background-color: rgb(11, 25, 46);
+            color: rgb(233, 233, 233);
+            font-size: .9rem;
+
+        }
+
+
+
+        .text-center {
+            text-align: center;
+        }
+
+
+        #logs_container {
+            position: relative;
+            width: 90%;
+            height: 49vh;
+            margin: 0 auto;
+            border-left: 1px solid rgba(189, 189, 189, 0.26);
+            border-right: 1px solid rgba(189, 189, 189, 0.26);
+            border-bottom: 1px solid rgba(189, 189, 189, 0.26);
+
+
+        }
+
+        #log {
+            height: 100%;
+            overflow: scroll;
+            margin: 0 auto;
+            font-size: .9em;
+            padding-left: 1rem;
+
+        }
+
+        #buttons_clear {
+            background-color: rgb(58, 75, 89);
+            top: -1rem;
+            z-index: 2;
+            position: absolute;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+        }
+
+        /* .left-aligned {} */
+
+        .right-aligned {
+            margin-left: auto;
+            margin-right: 1rem;
+
+
+        }
+
+        #start-config {
+
+
+            border: none;
+            padding: .2rem .5rem;
+            margin: .3rem 1rem;
+            z-index: 2;
+
+        }
+
+        button {
+            padding: .2rem .5rem;
+            border: none;
+
+        }
+
+        #top-fade {
+            position: absolute;
+            width: 100%;
+            height: 5rem;
+            background: linear-gradient(180deg, rgb(11, 25, 46), rgba(255, 0, 0, 0));
+            z-index: 1;
+        }
+
+        .secondary-button {
+            background-color: #393939;
+            color: white;
+            transition-duration: .2s;
+        }
+
+        .secondary-button:hover {
+            background-color: #464646;
+        }
+
+        .primary-button {
+            background-color: rgba(13, 206, 164, 0.87);
+            transition-duration: .2s;
+        }
+
+        .primary-button:hover {
+            background-color: rgba(17, 227, 182, 0.87);
+        }
+        .hide{
+            display:none;
+        }
+    </style>
+</head>
+
+
+
+<body>
+    <div id="togglers-container">
+        <button onclick="show_section('add-hub-container')">Añadir hub</button>
+        <button onclick="show_section('delete-hub-container')">Elminiar hub</button>
+
+    </div>
+    <div id="delete-hub-container" class="hide"></div>
+    <div id="add-hub-container">
+        <h1 class="text-center">Inicializacion del hub.</h1>
+
+        <ol>
+            <li>Asegurate de que no hayan dispositivos conectados a ningun hub.</li>
+            <li>Conecta un lector de tarjetas en el primer puerto de izquierda a derecha. (USB 2.0 recomendado)</li>
+            <li>Sigue las indicaciones.</li>
+            <li>Una vez lllegues al ultimo puerto, conecta el lector nuevamente al primer puerto.</li>
+        </ol>
+
+        <p id="timer"></p>
+        <h1 class="text-center">LOG</h1>
+        <div id="logs_container">
+
+
+
+            <div id="buttons_clear">
+                <div class="left-aligned">
+                    <button class="primary-button" onclick="start_config()" id="start-config">Iniciar
+                        configuracion</button>
+                </div>
+                <div class="right-aligned">
+                    <button class="secondary-button" onclick="toggle_auto_scroll()">Auto scroll</button>
+                    <button class="secondary-button" onclick="clear_logs()">Eliminar logs</button>
+                </div>
+            </div>
+
+            <div id="top-fade"></div>
+            <div style="height:100%;">
+                <p id="log"></p>
+            </div>
+        </div>
+        <div>
+            <p>Identificadores de puertos: <br> <span id="identifiers"></span></p>
+            <button onclick="save_hub_config()">Guardar configuracion del hub</button>
+        </div>
+    </div>
+
+</body>
+
+</html>

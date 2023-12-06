@@ -14,8 +14,11 @@ import random
 
 import json
 
-app = Flask(__name__)
+from flask_cors import CORS, cross_origin
 
+app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 main_usb_thread = False
 
@@ -72,6 +75,7 @@ def save_usb_identifiers():
 
 
 @app.route("/get_hubs")
+@cross_origin()
 def get_hubs():
     with open(get_app_path("data/hub_maps.json"), "r") as hub_map:
         json_hub_map = json.loads(hub_map.read())
@@ -80,8 +84,9 @@ def get_hubs():
 
 
 @app.route("/get_per_usb_data")
+@cross_origin()
 def get_per_usb_data():
-    with open(get_app_path("data/per_usb_info.json"), "r") as per_usb_data:
+    with open(get_app_path("data/usb_data/formated_UI_usb_data.json"), "r") as per_usb_data:
         json_per_usb_data = json.loads(per_usb_data.read())
     return json_per_usb_data
 
@@ -102,4 +107,4 @@ def get_app_path(relative_path):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0",port=config.CONTROLLERS[whoami]["port"],debug=True)

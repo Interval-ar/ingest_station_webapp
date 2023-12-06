@@ -10,6 +10,7 @@ device_template = {
     "children": [],
     "isUSB3": False,
 }
+
 child_template = {
     "name": "",
     "mountPoint": "",
@@ -27,62 +28,13 @@ def usb_devices_connected():
     response = sb.getoutput("lsblk -J -e7 ")
     response = json.loads(response)["blockdevices"]
 
-    per_usb_info = {}
+    device_data_for_UI = {}
     for device in response:
         if device["rm"]:
             device_data = structure_device_data(device)
-            print(device_data)
-            if "children" in device:
-                children = device["children"]
-
-                # print("children: ", len(children))
-                # detects usb 2.0 or 3.x based on the usb
-                device_dev_path = get_device_dev_path(device)
-                is_usb_3 = check_if_usb_3(device)
-                for child in children:
-                    device_path_list = device_dev_path.split("/")
-                    port_identifier = 00000
-                    for section in device_path_list:
-                        if "1.0" in section:
-                            port_identifier = section
-                    child_values = {
-                        "name": device["name"],
-                        "mount_points": [],
-                        "size": [],
-                        "children": {},
-                        "usb_version_3": is_usb_3,
-                        "dev_path": device_dev_path + "/" + child["name"],
-                        "port_identifier": port_identifier,
-                    }
-                    if not child_values["port_identifier"] in per_usb_info:
-                        per_usb_info[child_values["port_identifier"]] = child_values
-                    per_usb_info[child_values["port_identifier"]]["children"][
-                        child["name"]
-                    ] = []
-                    if child["mountpoints"][0] == None:
-                        os.system(
-                            f"udisksctl mount -b /dev/{child['name']} --no-user-interaction > /dev/null"
-                        )
-                    else:
-                        df_data = os.system(f"df /dev/{child['name']} -h > /dev/null")
-                        per_usb_children_info = per_usb_info[
-                            child_values["port_identifier"]
-                        ]["children"][child["name"]]
-
-                        per_usb_children_info.append(child["name"])
-                        per_usb_children_info.append(child["mountpoints"][0])
-                        per_usb_children_info.append(child["size"])
-                        # print(child["mountpoints"])
-                        children_file_count = os.system(
-                            f"find {child['mountpoints'][0]} -type f | wc -l > /dev/null"
-                        )
-                        per_usb_children_info.append(children_file_count)
-
-            else:
-                # print(device)
-                # per_usb_info[device["name"]] = "no_child"
-                print("no_sd")
-    save_per_usb_info(per_usb_info)
+            device_data_for_UI[device_data["portID"]] = (device_data)
+    save_data_for_UI(device_data_for_UI)
+    print(device_data_for_UI)
 
 
 def structure_device_data(device):
@@ -94,8 +46,6 @@ def structure_device_data(device):
 
 
 def handle_device_with_children(device):
-    print("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-
     children = device["children"]
     device_name = device["name"]
     device_path = get_device_dev_path(device)
@@ -109,7 +59,7 @@ def handle_device_with_children(device):
         "children_count": device_children_count,
         "children": structure_children(children),
     }
-    
+
     return device_template
 
 
@@ -174,6 +124,13 @@ def mount_device_if_not_mounted(partition):
         return True
     else:
         return False
+
+
+def save_data_for_UI(usb_data_for_ui):
+    with open(
+        get_app_path("data/usb_data/formated_UI_usb_data.json"), "w"
+    ) as per_usb_info:
+        return per_usb_info.write(json.dumps(usb_data_for_ui))
 
 
 def save_per_usb_info(usb_info):
